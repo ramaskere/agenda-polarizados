@@ -3,3 +3,7 @@ node_modules/
 .env.local
 .DS_Store
 supabase/.temp/
+
+# Claves de cuentas de servicio de Google (contienen la private key en texto plano)
+*.iam.gserviceaccount.com.json
+galvanic-veld-*.json
