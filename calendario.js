@@ -1,8 +1,9 @@
 // Calendario mensual reutilizable: recibe la lista plana de disponibilidad
 // ([{fecha, hora}, ...]) que devuelve la Edge Function "disponibilidad" y
-// dibuja un mes con los dias que tienen horario libre resaltados. Al elegir
-// un dia, muestra los horarios de ESE dia mismo, abajo del calendario (no
-// hace falta otra pantalla). Lo usan tanto app.js (reserva publica) como
+// dibuja un mes con los dias que tienen horario libre resaltados. Al tocar
+// un dia, la grilla del mes se reemplaza por los horarios de ESE dia dentro
+// de la misma tarjeta (no se muestran los dos juntos); un link "volver"
+// regresa al mes. Lo usan tanto app.js (reserva publica) como
 // admin/admin.js (ver disponibilidad).
 window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
   const porFecha = {};
@@ -16,6 +17,7 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
   const hoyStr = hoy.toISOString().slice(0, 10);
 
   let cursor = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  let vista = 'dias'; // 'dias' | 'horarios'
   let fechaSeleccionada = null;
 
   const DIAS_SEMANA = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
@@ -33,6 +35,16 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
   }
 
   function render() {
+    contenedor.innerHTML = `<div class="tarjeta-calendario">${vista === 'dias' ? htmlVistaDias() : htmlVistaHorarios()}</div>`;
+
+    if (vista === 'dias') {
+      cablearVistaDias();
+    } else {
+      cablearVistaHorarios();
+    }
+  }
+
+  function htmlVistaDias() {
     const y = cursor.getFullYear();
     const m = cursor.getMonth();
     const primerDiaSemana = (new Date(y, m, 1).getDay() + 6) % 7; // 0 = lunes
@@ -48,27 +60,26 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
       const fs = fechaStr(y, m, d);
       const tieneHorarios = !!porFecha[fs];
       const esHoy = fs === hoyStr;
-      const esSeleccionado = fs === fechaSeleccionada;
       const clases = ['dia-celda'];
       if (tieneHorarios) clases.push('disponible'); else clases.push('no-disponible');
       if (esHoy) clases.push('hoy');
-      if (esSeleccionado) clases.push('seleccionado');
       celdas += `<button class="${clases.join(' ')}" data-fecha="${fs}" ${tieneHorarios ? '' : 'disabled'}><span>${d}</span><span class="dia-punto"></span></button>`;
     }
 
-    contenedor.innerHTML = `
-      <div class="tarjeta-calendario">
-        <div class="calendario-header">
-          <button class="calendario-nav" id="cal-prev" ${esMesActual ? 'disabled' : ''} aria-label="Mes anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <div class="calendario-mes">${MESES[m]} ${y}</div>
-          <button class="calendario-nav" id="cal-next" ${hayMasAdelante ? '' : 'disabled'} aria-label="Mes siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
-        </div>
-        <div class="calendario-semana">${DIAS_SEMANA.map((d) => `<span>${d}</span>`).join('')}</div>
-        <div class="calendario-grilla">${celdas}</div>
-        <div class="panel-horarios" id="cal-horarios"></div>
+    return `
+      <div class="calendario-header">
+        <button class="calendario-nav" id="cal-prev" ${esMesActual ? 'disabled' : ''} aria-label="Mes anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="calendario-mes">${MESES[m]} ${y}</div>
+        <button class="calendario-nav" id="cal-next" ${hayMasAdelante ? '' : 'disabled'} aria-label="Mes siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
       </div>
+      <div class="calendario-semana">${DIAS_SEMANA.map((d) => `<span>${d}</span>`).join('')}</div>
+      <div class="calendario-grilla">${celdas}</div>
     `;
+  }
 
+  function cablearVistaDias() {
+    const y = cursor.getFullYear();
+    const m = cursor.getMonth();
     contenedor.querySelector('#cal-prev').addEventListener('click', () => {
       cursor = new Date(y, m - 1, 1);
       render();
@@ -80,17 +91,14 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
     contenedor.querySelectorAll('.dia-celda.disponible').forEach((btn) => {
       btn.addEventListener('click', () => {
         fechaSeleccionada = btn.dataset.fecha;
+        vista = 'horarios';
         render();
-        mostrarHorarios(fechaSeleccionada);
       });
     });
-
-    if (fechaSeleccionada && porFecha[fechaSeleccionada]) mostrarHorarios(fechaSeleccionada);
   }
 
-  function mostrarHorarios(fecha) {
-    const panel = contenedor.querySelector('#cal-horarios');
-    if (!panel) return;
+  function htmlVistaHorarios() {
+    const fecha = fechaSeleccionada;
     const horas = porFecha[fecha] || [];
     const tituloFecha = new Date(`${fecha}T12:00:00-03:00`).toLocaleDateString('es-AR', {
       weekday: 'long',
@@ -111,16 +119,24 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
       `;
     }
 
-    panel.innerHTML = `
-      <h3>Horarios para el ${tituloFecha}</h3>
+    return `
+      <button class="volver-dias" id="cal-volver">‹ Elegir otro día</button>
+      <h3>${tituloFecha}</h3>
       ${grupoHtml('Mañana', mañana)}
       ${grupoHtml('Tarde', tarde)}
     `;
-    panel.querySelectorAll('.slot').forEach((btn) => {
+  }
+
+  function cablearVistaHorarios() {
+    contenedor.querySelector('#cal-volver').addEventListener('click', () => {
+      vista = 'dias';
+      render();
+    });
+    contenedor.querySelectorAll('.slot').forEach((btn) => {
       btn.addEventListener('click', () => {
-        panel.querySelectorAll('.slot.seleccionado').forEach((s) => s.classList.remove('seleccionado'));
+        contenedor.querySelectorAll('.slot.seleccionado').forEach((s) => s.classList.remove('seleccionado'));
         btn.classList.add('seleccionado');
-        onElegirHora(fecha, btn.dataset.hora);
+        onElegirHora(fechaSeleccionada, btn.dataset.hora);
       });
     });
   }
@@ -138,6 +154,7 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
     seleccionarPrimerDiaDisponible() {
       if (fechasDisponibles.length > 0) {
         fechaSeleccionada = fechasDisponibles[0];
+        vista = 'horarios';
         render();
       }
     },
