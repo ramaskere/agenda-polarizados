@@ -4,13 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Sacá tu turno</title>
+  <meta name="description" content="Reservá tu turno de polarizado para auto, SUV o camioneta. Elegí el día y el horario que más te convenga." />
+  <meta property="og:title" content="Sacá tu turno — Polarizados" />
+  <meta property="og:description" content="Reservá tu turno de polarizado para auto, SUV o camioneta. Elegí el día y el horario que más te convenga." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="contenedor">
     <h1>Sacá tu turno</h1>
     <p class="subtitulo">Elegí tu vehículo, el día y el horario.</p>
-    <span class="seña-badge">Se reserva con una seña de $5.000</span>
+
+    <div class="pasos-indicador" id="pasos-indicador">
+      <div class="paso-item" data-paso-item="servicio">
+        <span class="paso-numero">1</span>
+        <span class="paso-label">Vehículo</span>
+      </div>
+      <div class="paso-linea"></div>
+      <div class="paso-item" data-paso-item="horario">
+        <span class="paso-numero">2</span>
+        <span class="paso-label">Turno</span>
+      </div>
+      <div class="paso-linea"></div>
+      <div class="paso-item" data-paso-item="datos">
+        <span class="paso-numero">3</span>
+        <span class="paso-label">Datos</span>
+      </div>
+    </div>
 
     <section class="paso activo" id="paso-servicio">
       <div id="lista-servicios" class="cargando">Cargando servicios…</div>
@@ -30,6 +53,7 @@
 
       <label for="telefono">Teléfono (con código de área)</label>
       <input id="telefono" type="tel" autocomplete="tel" inputmode="tel" placeholder="11 2345 6789" />
+      <span class="ayuda-campo" id="ayuda-telefono">Revisá el teléfono, le faltan números.</span>
 
       <label for="vehiculo">Auto (marca, modelo, año)</label>
       <input id="vehiculo" type="text" placeholder="Ej: VW Gol 2019" />

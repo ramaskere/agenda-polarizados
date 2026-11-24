@@ -21,6 +21,9 @@
     camioneta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V8.8a1 1 0 0 1 1-1h4.3l1.7-2.3h2v7.5"/><path d="M12.5 10.3h4l3 2.7"/><path d="M2.5 13h19v2.5a1 1 0 0 1-1 1h-1.2a1 1 0 0 1-1-1v-.7H5.7v.7a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V13Z"/><circle cx="7" cy="16.5" r="1.4"/><circle cx="17" cy="16.5" r="1.4"/></svg>',
   };
 
+  const ICONO_CALENDARIO =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>';
+
   function iconoPara(nombre) {
     const n = nombre.toLowerCase();
     if (n.includes('camioneta') || n.includes('pick')) return ICONOS.camioneta;
@@ -33,12 +36,22 @@
     horario: document.getElementById('paso-horario'),
     datos: document.getElementById('paso-datos'),
   };
+  const ORDEN_PASOS = ['servicio', 'horario', 'datos'];
 
   function irAPaso(nombre) {
     Object.values(pasos).forEach((p) => p.classList.remove('activo'));
     pasos[nombre].classList.add('activo');
+
+    const indiceActual = ORDEN_PASOS.indexOf(nombre);
+    document.querySelectorAll('[data-paso-item]').forEach((item) => {
+      const indice = ORDEN_PASOS.indexOf(item.dataset.pasoItem);
+      item.classList.toggle('activo', indice === indiceActual);
+      item.classList.toggle('hecho', indice < indiceActual);
+    });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+  irAPaso('servicio');
 
   document.querySelectorAll('[data-volver]').forEach((btn) => {
     btn.addEventListener('click', () => irAPaso(btn.dataset.volver.replace('paso-', '')));
@@ -66,7 +79,6 @@
         <span class="servicio-icono">${iconoPara(s.nombre)}</span>
         <span class="servicio-texto">
           <span class="servicio-nombre">${s.nombre}</span>
-          <span class="servicio-duracion">Dura aprox. ${s.duracion_minutos} min</span>
         </span>
       `;
       btn.addEventListener('click', () => elegirServicio(s));
@@ -105,12 +117,40 @@
   function elegirSlot(fecha, hora) {
     estado.slot = { fecha, hora };
 
-    document.getElementById('resumen-turno').textContent =
-      `${estado.servicio.nombre} — ${new Date(`${fecha}T12:00:00-03:00`).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${hora}hs`;
+    const fechaLegible = new Date(`${fecha}T12:00:00-03:00`).toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+
+    document.getElementById('resumen-turno').innerHTML = `
+      <span class="resumen-icono">${ICONO_CALENDARIO}</span>
+      <span class="resumen-texto">
+        ${estado.servicio.nombre} — ${fechaLegible} a las ${hora}hs
+        <span class="resumen-seña">Se confirma con una seña de $5.000</span>
+      </span>
+    `;
 
     irAPaso('datos');
     if (window.fbq) fbq('track', 'InitiateCheckout');
   }
+
+  // Validacion en vivo del telefono: avisa si parece incompleto, sin
+  // bloquear mientras la persona todavia esta escribiendo.
+  const inputTelefono = document.getElementById('telefono');
+  const ayudaTelefono = document.getElementById('ayuda-telefono');
+  inputTelefono.addEventListener('blur', () => {
+    const digitos = inputTelefono.value.replace(/\D/g, '');
+    const incompleto = digitos.length > 0 && digitos.length < 8;
+    inputTelefono.classList.toggle('invalido', incompleto);
+    ayudaTelefono.classList.toggle('visible', incompleto);
+  });
+  inputTelefono.addEventListener('input', () => {
+    if (inputTelefono.classList.contains('invalido')) {
+      inputTelefono.classList.remove('invalido');
+      ayudaTelefono.classList.remove('visible');
+    }
+  });
 
   document.getElementById('btn-pagar').addEventListener('click', async () => {
     const nombre = document.getElementById('nombre').value.trim();
@@ -119,8 +159,8 @@
     const errorEl = document.getElementById('error-datos');
     errorEl.style.display = 'none';
 
-    if (!nombre || !telefono) {
-      errorEl.textContent = 'Completá nombre y teléfono.';
+    if (!nombre || telefono.replace(/\D/g, '').length < 8) {
+      errorEl.textContent = 'Completá tu nombre y un teléfono válido.';
       errorEl.style.display = 'block';
       return;
     }

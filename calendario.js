@@ -53,15 +53,15 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
       if (tieneHorarios) clases.push('disponible'); else clases.push('no-disponible');
       if (esHoy) clases.push('hoy');
       if (esSeleccionado) clases.push('seleccionado');
-      celdas += `<button class="${clases.join(' ')}" data-fecha="${fs}" ${tieneHorarios ? '' : 'disabled'}>${d}</button>`;
+      celdas += `<button class="${clases.join(' ')}" data-fecha="${fs}" ${tieneHorarios ? '' : 'disabled'}><span>${d}</span><span class="dia-punto"></span></button>`;
     }
 
     contenedor.innerHTML = `
       <div class="tarjeta-calendario">
         <div class="calendario-header">
-          <button class="calendario-nav" id="cal-prev" ${esMesActual ? 'disabled' : ''} aria-label="Mes anterior">‹</button>
+          <button class="calendario-nav" id="cal-prev" ${esMesActual ? 'disabled' : ''} aria-label="Mes anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
           <div class="calendario-mes">${MESES[m]} ${y}</div>
-          <button class="calendario-nav" id="cal-next" ${hayMasAdelante ? '' : 'disabled'} aria-label="Mes siguiente">›</button>
+          <button class="calendario-nav" id="cal-next" ${hayMasAdelante ? '' : 'disabled'} aria-label="Mes siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
         </div>
         <div class="calendario-semana">${DIAS_SEMANA.map((d) => `<span>${d}</span>`).join('')}</div>
         <div class="calendario-grilla">${celdas}</div>
@@ -97,9 +97,24 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
       day: 'numeric',
       month: 'long',
     });
+
+    const mañana = horas.filter((h) => parseInt(h.split(':')[0], 10) < 13);
+    const tarde = horas.filter((h) => parseInt(h.split(':')[0], 10) >= 13);
+
+    function grupoHtml(titulo, lista) {
+      if (lista.length === 0) return '';
+      return `
+        <div class="horarios-grupo">
+          <h4>${titulo}</h4>
+          <div class="slots">${lista.map((h) => `<button class="slot" data-hora="${h}">${h}</button>`).join('')}</div>
+        </div>
+      `;
+    }
+
     panel.innerHTML = `
       <h3>Horarios para el ${tituloFecha}</h3>
-      <div class="slots">${horas.map((h) => `<button class="slot" data-hora="${h}">${h}</button>`).join('')}</div>
+      ${grupoHtml('Mañana', mañana)}
+      ${grupoHtml('Tarde', tarde)}
     `;
     panel.querySelectorAll('.slot').forEach((btn) => {
       btn.addEventListener('click', () => {

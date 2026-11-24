@@ -9,13 +9,16 @@
 <body>
   <div class="contenedor">
     <div class="estado-pantalla" id="pantalla">
-      <div class="icono">⏳</div>
+      <div class="icono pendiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>
       <p>Confirmando el pago…</p>
     </div>
   </div>
 
   <script src="config.js"></script>
   <script>
+    const ICONO_RELOJ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';
+    const ICONO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.3 2.3L16 10"/></svg>';
+
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
     n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
@@ -42,7 +45,7 @@
           const fecha = new Date(turno.inicio).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Argentina/Buenos_Aires' });
           const hora = new Date(turno.inicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' });
           pantalla.innerHTML = `
-            <div class="icono">✅</div>
+            <div class="icono exito">${ICONO_CHECK}</div>
             <h2>¡Turno confirmado!</h2>
             <p>${turno.servicio} — ${fecha} a las ${hora}hs</p>
             <p>El saldo se paga en el local al terminar el trabajo.</p>
@@ -55,7 +58,7 @@
           setTimeout(() => chequear(intentos - 1), 2000);
         } else {
           pantalla.innerHTML = `
-            <div class="icono">⏳</div>
+            <div class="icono pendiente">${ICONO_RELOJ}</div>
             <p>Todavía estamos confirmando tu pago. Si no te llega la confirmación en unos minutos, escribinos.</p>
           `;
         }
