@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sacá tu turno</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="contenedor">
+    <h1>Sacá tu turno</h1>
+    <p class="subtitulo">Elegí el servicio, el horario y reservá con una seña de $5.000.</p>
+
+    <section class="paso activo" id="paso-servicio">
+      <div id="lista-servicios" class="cargando">Cargando servicios…</div>
+    </section>
+
+    <section class="paso" id="paso-horario">
+      <button class="volver" data-volver="paso-servicio">← Elegir otro servicio</button>
+      <div id="lista-horarios" class="cargando">Buscando horarios disponibles…</div>
+    </section>
+
+    <section class="paso" id="paso-datos">
+      <button class="volver" data-volver="paso-horario">← Elegir otro horario</button>
+      <div class="resumen" id="resumen-turno"></div>
+
+      <label for="nombre">Nombre y apellido</label>
+      <input id="nombre" type="text" autocomplete="name" />
+
+      <label for="telefono">Teléfono (con código de área)</label>
+      <input id="telefono" type="tel" autocomplete="tel" placeholder="11 2345 6789" />
+
+      <label for="vehiculo">Auto (marca, modelo, año)</label>
+      <input id="vehiculo" type="text" placeholder="Ej: VW Gol 2019" />
+
+      <button class="principal" id="btn-pagar">Reservar y pagar seña ($5.000)</button>
+      <p class="error" id="error-datos" style="display:none"></p>
+    </section>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // Meta Pixel base — tracking estandar del lado del navegador.
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    if (window.AGENDA_CONFIG.META_PIXEL_ID && window.AGENDA_CONFIG.META_PIXEL_ID !== 'TU-PIXEL-ID') {
+      fbq('init', window.AGENDA_CONFIG.META_PIXEL_ID);
+      fbq('track', 'PageView');
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

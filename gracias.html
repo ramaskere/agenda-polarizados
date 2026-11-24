@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Turno reservado</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="contenedor">
+    <div class="estado-pantalla" id="pantalla">
+      <div class="icono">⏳</div>
+      <p>Confirmando el pago…</p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    if (window.AGENDA_CONFIG.META_PIXEL_ID && window.AGENDA_CONFIG.META_PIXEL_ID !== 'TU-PIXEL-ID') {
+      fbq('init', window.AGENDA_CONFIG.META_PIXEL_ID);
+    }
+
+    const params = new URLSearchParams(location.search);
+    const turnoId = params.get('turno');
+    const eventId = params.get('event');
+    const pantalla = document.getElementById('pantalla');
+
+    async function chequear(intentos) {
+      try {
+        const resp = await fetch(`/api/estado-turno?id=${turnoId}`);
+        const turno = await resp.json();
+
+        if (turno.estado === 'confirmado') {
+          const fecha = new Date(turno.inicio).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Argentina/Buenos_Aires' });
+          const hora = new Date(turno.inicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' });
+          pantalla.innerHTML = `
+            <div class="icono">✅</div>
+            <h2>¡Turno confirmado!</h2>
+            <p>${turno.servicio} — ${fecha} a las ${hora}hs</p>
+            <p>El saldo se paga en el local al terminar el trabajo.</p>
+          `;
+          if (window.fbq) fbq('track', 'Schedule', {}, { eventID: eventId });
+          return;
+        }
+
+        if (intentos > 0) {
+          setTimeout(() => chequear(intentos - 1), 2000);
+        } else {
+          pantalla.innerHTML = `
+            <div class="icono">⏳</div>
+            <p>Todavía estamos confirmando tu pago. Si no te llega la confirmación en unos minutos, escribinos.</p>
+          `;
+        }
+      } catch (e) {
+        pantalla.innerHTML = '<p class="error">No pudimos confirmar el estado del turno. Escribinos si tenés dudas.</p>';
+      }
+    }
+
+    if (turnoId) chequear(6);
+    else pantalla.innerHTML = '<p class="error">Falta el turno. Volvé a la página de reservas.</p>';
+  </script>
+</body>
+</html>
