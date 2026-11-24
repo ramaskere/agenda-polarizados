@@ -10,6 +10,24 @@
 
   const estado = { servicio: null, slot: null };
 
+  // Icono por palabra clave del nombre del servicio, para que el panel admin
+  // pueda agregar servicios nuevos sin que haya que tocar este archivo.
+  const ICONOS = {
+    // Auto: techo bajo y parejo, perfil de sedán compacto.
+    default: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l1.2-3.2A2 2 0 0 1 7 8.5h10a2 2 0 0 1 1.8 1.3L20 13"/><path d="M2.5 13h19v2.5a1 1 0 0 1-1 1h-1.2a1 1 0 0 1-1-1v-.7H5.7v.7a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V13Z"/><circle cx="7" cy="16.5" r="1.4"/><circle cx="17" cy="16.5" r="1.4"/></svg>',
+    // SUV: techo alto y recto de punta a punta, mas cuadrado.
+    suv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 13V7.8a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1V13"/><path d="M4.5 10h15"/><path d="M2.5 13h19v2.5a1 1 0 0 1-1 1h-1.2a1 1 0 0 1-1-1v-.7H5.7v.7a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V13Z"/><circle cx="7" cy="16.5" r="1.4"/><circle cx="17" cy="16.5" r="1.4"/></svg>',
+    // Camioneta: cabina solo adelante + caja abierta y baja atras.
+    camioneta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13V8.8a1 1 0 0 1 1-1h4.3l1.7-2.3h2v7.5"/><path d="M12.5 10.3h4l3 2.7"/><path d="M2.5 13h19v2.5a1 1 0 0 1-1 1h-1.2a1 1 0 0 1-1-1v-.7H5.7v.7a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V13Z"/><circle cx="7" cy="16.5" r="1.4"/><circle cx="17" cy="16.5" r="1.4"/></svg>',
+  };
+
+  function iconoPara(nombre) {
+    const n = nombre.toLowerCase();
+    if (n.includes('camioneta') || n.includes('pick')) return ICONOS.camioneta;
+    if (n.includes('suv')) return ICONOS.suv;
+    return ICONOS.default;
+  }
+
   const pasos = {
     servicio: document.getElementById('paso-servicio'),
     horario: document.getElementById('paso-horario'),
@@ -19,6 +37,7 @@
   function irAPaso(nombre) {
     Object.values(pasos).forEach((p) => p.classList.remove('activo'));
     pasos[nombre].classList.add('activo');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   document.querySelectorAll('[data-volver]').forEach((btn) => {
@@ -38,76 +57,52 @@
       return;
     }
 
-    cont.innerHTML = '';
+    cont.innerHTML = '<div class="servicios-grid"></div>';
+    const grid = cont.querySelector('.servicios-grid');
     data.forEach((s) => {
       const btn = document.createElement('button');
       btn.className = 'servicio-card';
-      btn.textContent = `${s.nombre} (${s.duracion_minutos} min)`;
+      btn.innerHTML = `
+        <span class="servicio-icono">${iconoPara(s.nombre)}</span>
+        <span class="servicio-texto">
+          <span class="servicio-nombre">${s.nombre}</span>
+          <span class="servicio-duracion">Dura aprox. ${s.duracion_minutos} min</span>
+        </span>
+      `;
       btn.addEventListener('click', () => elegirServicio(s));
-      cont.appendChild(btn);
+      grid.appendChild(btn);
     });
   }
 
   async function elegirServicio(servicio) {
     estado.servicio = servicio;
     irAPaso('horario');
-    const cont = document.getElementById('lista-horarios');
+    const cont = document.getElementById('calendario');
     cont.innerHTML = '<p class="cargando">Buscando horarios disponibles…</p>';
 
     try {
-      const resp = await fetch(`${funcionesUrl}/disponibilidad?servicio_id=${servicio.id}&dias=14`, {
+      const resp = await fetch(`${funcionesUrl}/disponibilidad?servicio_id=${servicio.id}&dias=35`, {
         headers: headersFuncion,
       });
       const json = await resp.json();
-      renderHorarios(json.disponibles || []);
+      const disponibles = json.disponibles || [];
+
+      if (disponibles.length === 0) {
+        cont.innerHTML = '<p class="error">No hay horarios libres en los próximos días. Escribinos y te buscamos un hueco.</p>';
+        return;
+      }
+
+      window.crearCalendario({
+        contenedor: cont,
+        disponibles,
+        onElegirHora: (fecha, hora) => elegirSlot(fecha, hora),
+      });
     } catch (e) {
       cont.innerHTML = '<p class="error">No se pudo cargar la disponibilidad. Probá de nuevo.</p>';
     }
   }
 
-  function renderHorarios(disponibles) {
-    const cont = document.getElementById('lista-horarios');
-    if (disponibles.length === 0) {
-      cont.innerHTML = '<p class="error">No hay horarios libres en los próximos días. Escribinos y te buscamos un hueco.</p>';
-      return;
-    }
-
-    const porDia = {};
-    disponibles.forEach((d) => {
-      porDia[d.fecha] = porDia[d.fecha] || [];
-      porDia[d.fecha].push(d.hora);
-    });
-
-    cont.innerHTML = '';
-    Object.entries(porDia).forEach(([fecha, horas]) => {
-      const bloque = document.createElement('div');
-      bloque.className = 'dia-bloque';
-
-      const titulo = document.createElement('h3');
-      titulo.textContent = new Date(`${fecha}T12:00:00-03:00`).toLocaleDateString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      });
-      bloque.appendChild(titulo);
-
-      const slots = document.createElement('div');
-      slots.className = 'slots';
-      horas.forEach((hora) => {
-        const slot = document.createElement('button');
-        slot.className = 'slot';
-        slot.textContent = hora;
-        slot.addEventListener('click', () => elegirSlot(fecha, hora, slot));
-        slots.appendChild(slot);
-      });
-      bloque.appendChild(slots);
-      cont.appendChild(bloque);
-    });
-  }
-
-  function elegirSlot(fecha, hora, el) {
-    document.querySelectorAll('.slot.seleccionado').forEach((s) => s.classList.remove('seleccionado'));
-    el.classList.add('seleccionado');
+  function elegirSlot(fecha, hora) {
     estado.slot = { fecha, hora };
 
     document.getElementById('resumen-turno').textContent =

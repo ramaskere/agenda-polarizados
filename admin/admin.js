@@ -14,6 +14,7 @@
       cargarBloqueos();
       cargarServicios();
       cargarRecursos();
+      cargarSelectorDisponibilidad();
     }
   }
 
@@ -34,7 +35,7 @@
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tabs button').forEach((b) => b.classList.remove('activo'));
       btn.classList.add('activo');
-      ['turnos', 'bloqueos', 'servicios', 'recursos'].forEach((t) => {
+      ['turnos', 'disponibilidad', 'bloqueos', 'servicios', 'recursos'].forEach((t) => {
         document.getElementById(`tab-${t}`).style.display = t === btn.dataset.tab ? 'block' : 'none';
       });
     });
@@ -146,6 +147,36 @@
     document.getElementById('recurso-nombre').value = '';
     cargarRecursos();
   });
+
+  const funcionesUrl = `${cfg.SUPABASE_URL}/functions/v1`;
+
+  async function cargarSelectorDisponibilidad() {
+    const select = document.getElementById('disponibilidad-servicio');
+    const { data } = await supa.from('servicios').select('id, nombre').eq('activo', true).order('nombre');
+    select.innerHTML = (data || []).map((s) => `<option value="${s.id}">${s.nombre}</option>`).join('');
+    select.addEventListener('change', () => cargarDisponibilidad(select.value));
+    if (data && data.length > 0) cargarDisponibilidad(data[0].id);
+  }
+
+  async function cargarDisponibilidad(servicioId) {
+    const cont = document.getElementById('disponibilidad-calendario');
+    if (!servicioId) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<p class="cargando">Buscando disponibilidad…</p>';
+
+    const { data: sesion } = await supa.auth.getSession();
+    const resp = await fetch(`${funcionesUrl}/disponibilidad?servicio_id=${servicioId}&dias=35`, {
+      headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: `Bearer ${sesion.session.access_token}` },
+    });
+    const json = await resp.json();
+    const disponibles = json.disponibles || [];
+
+    if (disponibles.length === 0) {
+      cont.innerHTML = '<p class="error">No hay horarios libres en los próximos días para este servicio.</p>';
+      return;
+    }
+
+    window.crearCalendario({ contenedor: cont, disponibles, onElegirHora: () => {} });
+  }
 
   revisarSesion();
 })();

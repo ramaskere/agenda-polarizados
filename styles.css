@@ -1,126 +1,306 @@
 :root {
-  --azul: #0b63f6;
-  --texto: #111;
-  --borde: #ddd;
-  --fondo: #fafafa;
+  --azul: #2563eb;
+  --azul-oscuro: #1d4ed8;
+  --azul-claro: #dbeafe;
+  --ambar: #f59e0b;
+  --ambar-claro: #fef3c7;
+  --texto: #0f172a;
+  --texto-tenue: #64748b;
+  --borde: #e2e8f0;
+  --fondo: #f5f7fb;
+  --tarjeta: #ffffff;
+  --exito: #16a34a;
+  --error: #dc2626;
+  --radio: 16px;
 }
 
 * { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
-  font-family: -apple-system, system-ui, Arial, sans-serif;
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
   background: var(--fondo);
   color: var(--texto);
   margin: 0;
-  padding: 24px 16px 64px;
+  padding: 20px 16px 72px;
+  font-size: 17px;
+  line-height: 1.45;
 }
 
-.contenedor {
-  max-width: 480px;
-  margin: 0 auto;
-}
+.contenedor { max-width: 560px; margin: 0 auto; }
 
 h1 {
-  font-size: 22px;
-  margin-bottom: 4px;
+  font-size: 26px;
+  font-weight: 800;
+  margin: 4px 0 6px;
+  letter-spacing: -0.3px;
 }
 
 .subtitulo {
-  color: #555;
-  margin-bottom: 24px;
+  color: var(--texto-tenue);
+  margin: 0 0 20px;
+  font-size: 16px;
 }
 
-.paso {
-  display: none;
-  background: #fff;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-}
-
+.paso { display: none; }
 .paso.activo { display: block; }
 
-.servicio-card {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 14px;
-  margin-bottom: 10px;
-  border: 1px solid var(--borde);
-  border-radius: 10px;
-  background: #fff;
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--azul-oscuro);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
   cursor: pointer;
-  font-size: 15px;
+  padding: 10px 0;
 }
 
+/* --- Tarjetas de servicio / vehiculo --- */
+
+.servicios-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.servicio-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 18px;
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--tarjeta);
+  cursor: pointer;
+  font-size: 18px;
+  font-family: inherit;
+  color: var(--texto);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.servicio-card:active { transform: scale(0.99); }
+
 .servicio-card:hover,
-.servicio-card.seleccionado { border-color: var(--azul); background: #eef4ff; }
+.servicio-card.seleccionado {
+  border-color: var(--azul);
+  background: var(--azul-claro);
+}
 
-.dia-bloque { margin-bottom: 18px; }
-.dia-bloque h3 { font-size: 14px; color: #555; margin: 0 0 8px; text-transform: capitalize; }
+.servicio-icono {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--azul-claro);
+  border-radius: 12px;
+  color: var(--azul-oscuro);
+}
 
-.slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.servicio-card.seleccionado .servicio-icono { background: #fff; }
+
+.servicio-icono svg { width: 32px; height: 32px; }
+
+.servicio-texto { flex: 1; }
+.servicio-nombre { font-weight: 700; font-size: 18px; }
+.servicio-duracion { color: var(--texto-tenue); font-size: 14px; margin-top: 2px; }
+
+.seña-badge {
+  display: inline-block;
+  background: var(--ambar-claro);
+  color: #92400e;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
+/* --- Calendario --- */
+
+.tarjeta-calendario {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.calendario-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.calendario-mes {
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.calendario-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--borde);
+  background: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--texto);
+}
+
+.calendario-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.calendario-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.calendario-semana span {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-tenue);
+  text-transform: uppercase;
+}
+
+.calendario-grilla {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.dia-celda {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.dia-celda.vacio { visibility: hidden; cursor: default; }
+
+.dia-celda.disponible {
+  background: var(--azul-claro);
+  color: var(--azul-oscuro);
+}
+
+.dia-celda.disponible:hover { background: #c7dbfc; }
+
+.dia-celda.no-disponible {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.dia-celda.hoy { box-shadow: inset 0 0 0 2px var(--ambar); }
+
+.dia-celda.seleccionado {
+  background: var(--azul);
+  color: #fff;
+}
+
+.panel-horarios { margin-top: 18px; }
+
+.panel-horarios h3 {
+  font-size: 16px;
+  margin: 0 0 10px;
+  text-transform: capitalize;
+}
+
+.slots { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .slot {
-  padding: 8px 12px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
   background: #fff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--texto);
+  min-width: 78px;
+  text-align: center;
 }
 
 .slot:hover, .slot.seleccionado { border-color: var(--azul); background: var(--azul); color: #fff; }
 
-label { display: block; font-size: 13px; color: #555; margin: 14px 0 4px; }
+/* --- Formulario --- */
+
+label { display: block; font-size: 14px; font-weight: 600; color: var(--texto-tenue); margin: 16px 0 6px; }
 
 input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  font-size: 15px;
+  padding: 14px 14px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  font-size: 17px;
+  font-family: inherit;
+  background: #fff;
 }
+
+input:focus { outline: none; border-color: var(--azul); }
 
 button.principal {
   width: 100%;
-  margin-top: 20px;
-  padding: 14px;
+  margin-top: 22px;
+  padding: 17px;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--azul);
   color: #fff;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   cursor: pointer;
+  font-family: inherit;
 }
 
+button.principal:active { background: var(--azul-oscuro); }
 button.principal:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.volver {
-  background: none;
-  border: none;
-  color: #555;
-  font-size: 14px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  padding: 0;
+.error {
+  color: var(--error);
+  background: #fee2e2;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  margin-top: 12px;
 }
 
-.error { color: #c0392b; font-size: 14px; margin-top: 10px; }
-.cargando { color: #777; font-size: 14px; }
+.cargando { color: var(--texto-tenue); font-size: 16px; padding: 20px 0; text-align: center; }
 
 .resumen {
-  background: #eef4ff;
-  border-radius: 10px;
-  padding: 14px;
-  font-size: 14px;
+  background: var(--azul-claro);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
   margin-bottom: 10px;
 }
 
-.estado-pantalla {
-  text-align: center;
-  padding: 40px 16px;
-}
-.estado-pantalla .icono { font-size: 48px; margin-bottom: 12px; }
+.estado-pantalla { text-align: center; padding: 48px 16px; }
+.estado-pantalla .icono { font-size: 56px; margin-bottom: 14px; }
+.estado-pantalla h2 { font-size: 22px; margin: 0 0 10px; }
+.estado-pantalla p { color: var(--texto-tenue); font-size: 16px; }
