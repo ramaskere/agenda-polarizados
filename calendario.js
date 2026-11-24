@@ -106,24 +106,10 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
       month: 'long',
     });
 
-    const mañana = horas.filter((h) => parseInt(h.split(':')[0], 10) < 13);
-    const tarde = horas.filter((h) => parseInt(h.split(':')[0], 10) >= 13);
-
-    function grupoHtml(titulo, lista) {
-      if (lista.length === 0) return '';
-      return `
-        <div class="horarios-grupo">
-          <h4>${titulo}</h4>
-          <div class="slots">${lista.map((h) => `<button class="slot" data-hora="${h}">${h}</button>`).join('')}</div>
-        </div>
-      `;
-    }
-
     return `
       <button class="volver-dias" id="cal-volver">‹ Elegir otro día</button>
       <h3>${tituloFecha}</h3>
-      ${grupoHtml('Mañana', mañana)}
-      ${grupoHtml('Tarde', tarde)}
+      <div class="slots">${horas.map((h) => `<button class="slot" data-hora="${h}">${h}</button>`).join('')}</div>
     `;
   }
 

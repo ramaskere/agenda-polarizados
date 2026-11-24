@@ -1,13 +1,13 @@
 :root {
-  --tinta: #0f172a;
-  --primario: #1e3a5f;
-  --primario-oscuro: #15293f;
-  --primario-suave: #e9eef4;
-  --acento: #b45309;
-  --texto: #0f172a;
-  --texto-tenue: #475569;
-  --borde: #e3e7ee;
-  --fondo: #f7f8fa;
+  --tinta: #111111;
+  --primario: #cc1124;
+  --primario-oscuro: #9e0d1c;
+  --primario-suave: #fbe8ea;
+  --acento: #111111;
+  --texto: #121212;
+  --texto-tenue: #55565c;
+  --borde: #e4e4e7;
+  --fondo: #f7f7f8;
   --tarjeta: #ffffff;
   --exito: #15803d;
   --error: #b91c1c;
@@ -31,6 +31,15 @@ body {
 }
 
 .contenedor { max-width: 560px; margin: 0 auto; }
+
+.logo-marca {
+  display: block;
+  max-width: 220px;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin: 0 0 20px;
+}
 
 h1 {
   font-size: 24px;
@@ -300,31 +309,19 @@ h1 {
   text-transform: capitalize;
 }
 
-.horarios-grupo { margin-bottom: 16px; }
-.horarios-grupo:last-child { margin-bottom: 0; }
-
-.horarios-grupo h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--texto-tenue);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin: 0 0 8px;
-}
-
-.slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.slots { display: flex; flex-direction: column; gap: 8px; }
 
 .slot {
-  padding: 11px 14px;
+  padding: 14px;
   border: 1px solid var(--borde);
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   font-family: inherit;
   color: var(--texto);
-  min-width: 72px;
+  width: 100%;
   text-align: center;
 }
 
