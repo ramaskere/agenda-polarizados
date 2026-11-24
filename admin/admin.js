@@ -15,6 +15,7 @@
       cargarServicios();
       cargarRecursos();
       cargarSelectorDisponibilidad();
+      cargarHorarios();
     }
   }
 
@@ -35,7 +36,7 @@
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tabs button').forEach((b) => b.classList.remove('activo'));
       btn.classList.add('activo');
-      ['turnos', 'disponibilidad', 'bloqueos', 'servicios', 'recursos'].forEach((t) => {
+      ['turnos', 'disponibilidad', 'horarios', 'bloqueos', 'servicios', 'recursos'].forEach((t) => {
         document.getElementById(`tab-${t}`).style.display = t === btn.dataset.tab ? 'block' : 'none';
       });
     });
@@ -96,6 +97,62 @@
     if (!desde || !hasta) return;
     await supa.from('bloqueos').insert({ desde: new Date(desde).toISOString(), hasta: new Date(hasta).toISOString(), motivo });
     cargarBloqueos();
+  });
+
+  const DIAS_SEMANA_NOMBRE = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+  async function cargarHorarios() {
+    const cont = document.getElementById('tabla-horarios');
+    const { data } = await supa
+      .from('horarios_atencion')
+      .select('id, dia_semana, hora_inicio, hora_fin, activo')
+      .order('dia_semana');
+
+    if (!data || data.length === 0) {
+      cont.innerHTML = '<p class="error">Todavía no cargaste ningún horario de atención.</p>';
+      return;
+    }
+
+    cont.innerHTML = `<table><tr><th>Día</th><th>Desde</th><th>Hasta</th><th>Activo</th><th></th></tr>${data
+      .map(
+        (h) => `<tr>
+          <td>${DIAS_SEMANA_NOMBRE[h.dia_semana]}</td>
+          <td>${h.hora_inicio.slice(0, 5)}</td>
+          <td>${h.hora_fin.slice(0, 5)}</td>
+          <td>${h.activo ? 'sí' : 'no'}</td>
+          <td>
+            <button data-toggle-horario="${h.id}" data-valor="${!h.activo}">${h.activo ? 'Desactivar' : 'Activar'}</button>
+            <button data-borrar-horario="${h.id}">Quitar</button>
+          </td>
+        </tr>`
+      )
+      .join('')}</table>`;
+
+    cont.querySelectorAll('[data-toggle-horario]').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        await supa.from('horarios_atencion').update({ activo: btn.dataset.valor === 'true' }).eq('id', btn.dataset.toggleHorario);
+        cargarHorarios();
+      })
+    );
+    cont.querySelectorAll('[data-borrar-horario]').forEach((btn) =>
+      btn.addEventListener('click', async () => {
+        await supa.from('horarios_atencion').delete().eq('id', btn.dataset.borrarHorario);
+        cargarHorarios();
+      })
+    );
+  }
+
+  document.getElementById('btn-agregar-horario').addEventListener('click', async () => {
+    const dia_semana = parseInt(document.getElementById('horario-dia').value, 10);
+    const hora_inicio = document.getElementById('horario-inicio').value;
+    const hora_fin = document.getElementById('horario-fin').value;
+    if (!hora_inicio || !hora_fin) return;
+    if (hora_fin <= hora_inicio) {
+      alert('La hora de fin tiene que ser después de la hora de inicio.');
+      return;
+    }
+    await supa.from('horarios_atencion').insert({ dia_semana, hora_inicio, hora_fin });
+    cargarHorarios();
   });
 
   async function cargarServicios() {

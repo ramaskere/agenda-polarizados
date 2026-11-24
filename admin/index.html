@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GA Polarizados — Panel</title>
   <link rel="icon" href="../logo.webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../styles.css" />
   <style>
     .contenedor { max-width: 720px; }
@@ -41,6 +44,7 @@
       <div class="tabs">
         <button data-tab="turnos" class="activo">Turnos</button>
         <button data-tab="disponibilidad">Disponibilidad</button>
+        <button data-tab="horarios">Horarios</button>
         <button data-tab="bloqueos">Bloqueos</button>
         <button data-tab="servicios">Servicios</button>
         <button data-tab="recursos">Recursos</button>
@@ -53,6 +57,25 @@
           <select id="disponibilidad-servicio" style="flex:1; min-width:160px; padding:10px; border:1px solid var(--borde); border-radius:8px;"></select>
         </div>
         <div id="disponibilidad-calendario" style="margin-top:14px"></div>
+      </section>
+
+      <section id="tab-horarios" style="display:none">
+        <p style="color:var(--texto-tenue); font-size:14px; margin-top:0">Agregá una franja por cada día que atendés. Si un día tiene un corte al mediodía, cargá dos franjas para ese mismo día.</p>
+        <div class="fila-form">
+          <select id="horario-dia" style="flex:1; min-width:140px; padding:10px; border:1px solid var(--borde); border-radius:8px;">
+            <option value="1">Lunes</option>
+            <option value="2">Martes</option>
+            <option value="3">Miércoles</option>
+            <option value="4">Jueves</option>
+            <option value="5">Viernes</option>
+            <option value="6">Sábado</option>
+            <option value="0">Domingo</option>
+          </select>
+          <input type="time" id="horario-inicio" value="09:00" />
+          <input type="time" id="horario-fin" value="18:00" />
+          <button id="btn-agregar-horario">Agregar</button>
+        </div>
+        <div id="tabla-horarios"></div>
       </section>
 
       <section id="tab-bloqueos" style="display:none">
