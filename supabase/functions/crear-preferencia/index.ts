@@ -1,22 +1,19 @@
-// POST /api/crear-preferencia
+// POST .../functions/v1/crear-preferencia
 // body: { servicio_id, fecha: "2026-12-01", hora: "14:30", cliente_nombre, cliente_telefono, vehiculo }
 // Crea el turno en estado pendiente_pago (ocupando un recurso libre) y la
 // preferencia de Mercado Pago para cobrar la senia. Devuelve el link de pago.
-const { supabaseAdmin, aFechaHoraArgentina, sumarMinutos, SENIA_ARS } = require('./_lib');
+import { supabaseAdmin, aFechaHoraArgentina, sumarMinutos, SENIA_ARS, jsonResponse, corsHeaders } from '../_shared/lib.ts';
 
 const MINUTOS_PARA_EXPIRAR = 15;
 
-function seSuperponen(aInicio, aFin, bInicio, bFin) {
-  return aInicio < bFin && bInicio < aFin;
-}
-
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'metodo no permitido' });
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return jsonResponse({ error: 'metodo no permitido' }, 405);
 
   try {
-    const { servicio_id, fecha, hora, cliente_nombre, cliente_telefono, vehiculo } = req.body || {};
+    const { servicio_id, fecha, hora, cliente_nombre, cliente_telefono, vehiculo } = await req.json();
     if (!servicio_id || !fecha || !hora || !cliente_nombre || !cliente_telefono) {
-      return res.status(400).json({ error: 'faltan datos obligatorios' });
+      return jsonResponse({ error: 'faltan datos obligatorios' }, 400);
     }
 
     const db = supabaseAdmin();
@@ -27,15 +24,15 @@ module.exports = async (req, res) => {
       .eq('id', servicio_id)
       .eq('activo', true)
       .single();
-    if (errServicio || !servicio) return res.status(404).json({ error: 'servicio no encontrado' });
+    if (errServicio || !servicio) return jsonResponse({ error: 'servicio no encontrado' }, 404);
 
     const inicio = aFechaHoraArgentina(fecha, hora);
     const fin = sumarMinutos(inicio, servicio.duracion_minutos);
-    if (inicio.getTime() <= Date.now()) return res.status(400).json({ error: 'ese horario ya paso' });
+    if (inicio.getTime() <= Date.now()) return jsonResponse({ error: 'ese horario ya paso' }, 400);
 
-    // Buscar un recurso libre para esa franja exacta (chequeo optimista: el
-    // constraint de exclusion en la tabla turnos es la garantia real contra
-    // una carrera de dos personas eligiendo el mismo horario a la vez).
+    // Chequeo optimista de que hay un recurso libre: el constraint de
+    // exclusion en la tabla turnos es la garantia real contra una carrera de
+    // dos personas eligiendo el mismo horario a la vez.
     const { data: recursos } = await db.from('recursos').select('id').eq('activo', true);
     const { data: turnosQueChocan } = await db
       .from('turnos')
@@ -49,11 +46,14 @@ module.exports = async (req, res) => {
       .lt('desde', fin.toISOString())
       .gt('hasta', inicio.toISOString());
 
-    const ocupados = new Set([...(turnosQueChocan || []).map((t) => t.recurso_id), ...(bloqueosQueChocan || []).filter((b) => b.recurso_id).map((b) => b.recurso_id)]);
+    const ocupados = new Set([
+      ...(turnosQueChocan || []).map((t) => t.recurso_id),
+      ...(bloqueosQueChocan || []).filter((b) => b.recurso_id).map((b) => b.recurso_id),
+    ]);
     const hayBloqueoGeneral = (bloqueosQueChocan || []).some((b) => b.recurso_id === null);
     const recursoLibre = hayBloqueoGeneral ? null : (recursos || []).find((r) => !ocupados.has(r.id));
 
-    if (!recursoLibre) return res.status(409).json({ error: 'horario_no_disponible' });
+    if (!recursoLibre) return jsonResponse({ error: 'horario_no_disponible' }, 409);
 
     const expiraAt = new Date(Date.now() + MINUTOS_PARA_EXPIRAR * 60000);
 
@@ -76,18 +76,19 @@ module.exports = async (req, res) => {
     if (errTurno) {
       // El constraint de exclusion salta justo aca si alguien reservo el
       // mismo recurso/franja un instante antes.
-      if (errTurno.code === '23P01') return res.status(409).json({ error: 'horario_no_disponible' });
+      if (errTurno.code === '23P01') return jsonResponse({ error: 'horario_no_disponible' }, 409);
       console.error(errTurno);
-      return res.status(500).json({ error: 'no se pudo crear el turno' });
+      return jsonResponse({ error: 'no se pudo crear el turno' }, 500);
     }
 
-    const baseUrl = process.env.SITE_URL || `https://${req.headers.host}`;
-    const preference = await crearPreferenciaMercadoPago({ turno, servicio, baseUrl });
+    const siteUrl = Deno.env.get('SITE_URL') || '';
+    const functionsUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
+    const preference = await crearPreferenciaMercadoPago({ turno, servicio, siteUrl, functionsUrl });
 
     if (!preference.id) {
       console.error('Mercado Pago no devolvio preferencia', preference);
       await db.from('turnos').update({ estado: 'cancelado' }).eq('id', turno.id);
-      return res.status(502).json({ error: 'no se pudo generar el link de pago' });
+      return jsonResponse({ error: 'no se pudo generar el link de pago' }, 502);
     }
 
     await db.from('pagos').insert({
@@ -97,23 +98,33 @@ module.exports = async (req, res) => {
       estado: 'pending',
     });
 
-    return res.status(200).json({
+    return jsonResponse({
       turno_id: turno.id,
       meta_event_id: turno.meta_event_id,
       init_point: preference.init_point,
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'error interno' });
+    return jsonResponse({ error: 'error interno' }, 500);
   }
-};
+});
 
-async function crearPreferenciaMercadoPago({ turno, servicio, baseUrl }) {
+async function crearPreferenciaMercadoPago({
+  turno,
+  servicio,
+  siteUrl,
+  functionsUrl,
+}: {
+  turno: { id: string; meta_event_id: string };
+  servicio: { nombre: string };
+  siteUrl: string;
+  functionsUrl: string;
+}) {
   const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+      Authorization: `Bearer ${Deno.env.get('MP_ACCESS_TOKEN')}`,
     },
     body: JSON.stringify({
       items: [
@@ -125,11 +136,11 @@ async function crearPreferenciaMercadoPago({ turno, servicio, baseUrl }) {
         },
       ],
       external_reference: turno.id,
-      notification_url: `${baseUrl}/api/mp-webhook`,
+      notification_url: `${functionsUrl}/mp-webhook`,
       back_urls: {
-        success: `${baseUrl}/gracias.html?turno=${turno.id}&event=${turno.meta_event_id}`,
-        pending: `${baseUrl}/pendiente.html?turno=${turno.id}`,
-        failure: `${baseUrl}/error.html?turno=${turno.id}`,
+        success: `${siteUrl}/gracias.html?turno=${turno.id}&event=${turno.meta_event_id}`,
+        pending: `${siteUrl}/pendiente.html?turno=${turno.id}`,
+        failure: `${siteUrl}/error.html?turno=${turno.id}`,
       },
       auto_return: 'approved',
     }),

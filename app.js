@@ -1,6 +1,12 @@
 (function () {
   const cfg = window.AGENDA_CONFIG;
   const supa = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+  const funcionesUrl = `${cfg.SUPABASE_URL}/functions/v1`;
+  const headersFuncion = {
+    'Content-Type': 'application/json',
+    apikey: cfg.SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${cfg.SUPABASE_ANON_KEY}`,
+  };
 
   const estado = { servicio: null, slot: null };
 
@@ -49,7 +55,9 @@
     cont.innerHTML = '<p class="cargando">Buscando horarios disponibles…</p>';
 
     try {
-      const resp = await fetch(`/api/disponibilidad?servicio_id=${servicio.id}&dias=14`);
+      const resp = await fetch(`${funcionesUrl}/disponibilidad?servicio_id=${servicio.id}&dias=14`, {
+        headers: headersFuncion,
+      });
       const json = await resp.json();
       renderHorarios(json.disponibles || []);
     } catch (e) {
@@ -127,9 +135,9 @@
     boton.textContent = 'Generando el link de pago…';
 
     try {
-      const resp = await fetch('/api/crear-preferencia', {
+      const resp = await fetch(`${funcionesUrl}/crear-preferencia`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headersFuncion,
         body: JSON.stringify({
           servicio_id: estado.servicio.id,
           fecha: estado.slot.fecha,

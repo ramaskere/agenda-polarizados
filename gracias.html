@@ -29,10 +29,13 @@
     const turnoId = params.get('turno');
     const eventId = params.get('event');
     const pantalla = document.getElementById('pantalla');
+    const funcionesUrl = `${window.AGENDA_CONFIG.SUPABASE_URL}/functions/v1`;
 
     async function chequear(intentos) {
       try {
-        const resp = await fetch(`/api/estado-turno?id=${turnoId}`);
+        const resp = await fetch(`${funcionesUrl}/estado-turno?id=${turnoId}`, {
+          headers: { apikey: window.AGENDA_CONFIG.SUPABASE_ANON_KEY, Authorization: `Bearer ${window.AGENDA_CONFIG.SUPABASE_ANON_KEY}` },
+        });
         const turno = await resp.json();
 
         if (turno.estado === 'confirmado') {
