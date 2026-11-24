@@ -2,7 +2,7 @@
 // pensada para exponerse al navegador, la protege RLS del lado del server).
 // Completar con los datos reales del proyecto antes de publicar.
 window.AGENDA_CONFIG = {
-  SUPABASE_URL: 'https://TU-PROYECTO.supabase.co',
-  SUPABASE_ANON_KEY: 'TU-ANON-KEY',
+  SUPABASE_URL: 'https://sdibzwylwxlvqaxiwlkn.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_RzP46RPamToUJbY1zB3kSQ_oChB8n_L',
   META_PIXEL_ID: 'TU-PIXEL-ID',
 };
