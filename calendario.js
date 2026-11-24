@@ -65,8 +65,8 @@ window.crearCalendario = function ({ contenedor, disponibles, onElegirHora }) {
         </div>
         <div class="calendario-semana">${DIAS_SEMANA.map((d) => `<span>${d}</span>`).join('')}</div>
         <div class="calendario-grilla">${celdas}</div>
+        <div class="panel-horarios" id="cal-horarios"></div>
       </div>
-      <div class="panel-horarios" id="cal-horarios"></div>
     `;
 
     contenedor.querySelector('#cal-prev').addEventListener('click', () => {

@@ -279,7 +279,12 @@ h1 {
 
 .dia-celda.seleccionado .dia-punto { background: #fff; }
 
-.panel-horarios { margin-top: 18px; }
+.panel-horarios:empty { display: none; }
+.panel-horarios {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--borde);
+}
 
 .panel-horarios h3 {
   font-size: 15px;
