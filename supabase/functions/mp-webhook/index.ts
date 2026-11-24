@@ -3,7 +3,7 @@
 // front (ver supabase/functions/README.md). La seguridad real es la firma
 // x-signature + volver a pedir el pago a la API de Mercado Pago antes de
 // confirmar nada: nunca confiar en el estado que viene en el payload.
-import { supabaseAdmin, enviarEventoMeta, hmacSha256Hex, corsHeaders } from '../_shared/lib.ts';
+import { supabaseAdmin, enviarEventoMeta, crearEventoCalendario, hmacSha256Hex, corsHeaders } from '../_shared/lib.ts';
 
 async function firmaValida(req: Request, dataId: string | null) {
   const secret = Deno.env.get('MP_WEBHOOK_SECRET');
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         .update({ estado: 'confirmado', expira_at: null })
         .eq('id', turnoId)
         .eq('estado', 'pendiente_pago') // idempotente: si ya estaba confirmado, no reprocesa
-        .select()
+        .select('*, servicios(nombre)')
         .single();
 
       if (turno) {
@@ -81,6 +81,15 @@ Deno.serve(async (req) => {
           telefono: turno.cliente_telefono,
           nombre: turno.cliente_nombre,
           url: Deno.env.get('SITE_URL'),
+        });
+
+        await crearEventoCalendario({
+          tituloServicio: (turno.servicios as { nombre?: string } | null)?.nombre || 'Turno',
+          clienteNombre: turno.cliente_nombre,
+          clienteTelefono: turno.cliente_telefono,
+          vehiculo: turno.vehiculo,
+          inicioISO: turno.inicio,
+          finISO: turno.fin,
         });
       }
     } else if (pago.status === 'rejected' || pago.status === 'cancelled') {

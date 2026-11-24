@@ -72,15 +72,27 @@ Ver el plan completo en `/Users/ramaruiz/.claude/plans/jaunty-frolicking-clover-
 - Generar un token de acceso de Conversions API en Events Manager.
 - Completar `META_PIXEL_ID` y `META_CAPI_TOKEN` en `supabase/.env.local`, y el `META_PIXEL_ID` también en `config.js` (ese sí es público, va al navegador).
 
-### 5. Cron de turnos vencidos
+### 5. Google Calendar (opcional, para ver los turnos sin entrar al panel)
+
+Cada turno confirmado se crea también como evento en un Google Calendar, usando una "cuenta de servicio" (no hace falta que quede una sesión de Google abierta en ningún lado).
+
+1. Entrá a [console.cloud.google.com](https://console.cloud.google.com), creá un proyecto nuevo (cualquier nombre).
+2. Buscá "Google Calendar API" en el buscador de arriba y apretá **Habilitar**.
+3. Andá a **IAM y administración → Cuentas de servicio → Crear cuenta de servicio** (no hace falta asignarle ningún rol).
+4. Entrá a esa cuenta de servicio → pestaña **Claves** → **Agregar clave → Crear clave nueva → JSON**. Se descarga un archivo `.json`: ahí adentro están `client_email` y `private_key`.
+5. En Google Calendar (calendar.google.com), creá un calendario nuevo (botón **+** junto a "Otros calendarios" → "Crear calendario nuevo"), por ejemplo "Turnos GA Polarizados".
+6. En la configuración de ese calendario → **Compartir con determinadas personas** → agregá el `client_email` de la cuenta de servicio (termina en `.iam.gserviceaccount.com`) con permiso **Hacer cambios en los eventos**.
+7. En esa misma configuración, más abajo, copiá el **ID de calendario** (en "Integrar calendario").
+8. Pasame: el `client_email`, el `private_key` completo (con los `-----BEGIN/END PRIVATE KEY-----`) y el ID del calendario, y yo los cargo como secrets (`GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_KEY`, `GOOGLE_CALENDAR_ID`).
+
+### 6. Cron de turnos vencidos
 
 - En GitHub → Settings → Secrets and variables → Actions, agregar `SUPABASE_URL` (`https://sdibzwylwxlvqaxiwlkn.supabase.co`) y `CRON_SECRET` (el mismo valor que pusiste en `supabase/.env.local`).
 - Si el workflow todavía no está en GitHub porque faltó el permiso `workflow` del token de `gh`, agregalo a mano desde la web: GitHub → el repo → Add file → Create new file → `.github/workflows/liberar-vencidos.yml`, pegar el contenido de ese archivo local y confirmar.
 
-### 6. Datos reales
+### 7. Datos reales
 
-- Cargar desde el panel admin (o directo en Supabase) cuántos boxes/instaladores hay (`recursos`), qué servicios ofrecés y cuánto dura cada uno (`servicios`), y crear tu usuario en Authentication → Users para entrar al panel admin cuando quieras.
-- El horario real de atención (`horarios_atencion`) se carga por SQL por ahora.
+Cargar desde el panel admin cuántos boxes/instaladores hay (pestaña Recursos), qué servicios ofrecés y cuánto dura cada uno (pestaña Servicios), y el horario real de atención (pestaña Horarios).
 
 ### 7. Probar todo en modo sandbox de Mercado Pago antes de pasar a producción
 
